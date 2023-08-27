@@ -1,6 +1,7 @@
 package com.apiHateoas.controller;
 
 import com.apiHateoas.model.Cuenta;
+import com.apiHateoas.model.Monto;
 import com.apiHateoas.service.CuentaService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,7 @@ public class CuentaController {
 
         for (Cuenta cuenta:cuentas) {
             cuenta.add(linkTo(methodOn(CuentaController.class).getById(cuenta.getId())).withSelfRel());
+            cuenta.add(linkTo(methodOn(CuentaController.class).depositarDinero(cuenta.getId(), null)).withRel("depositos"));
             cuenta.add(linkTo(methodOn(CuentaController.class).getAll()).withRel(IanaLinkRelations.COLLECTION));
         }
 
@@ -48,6 +50,8 @@ public class CuentaController {
         try {
             Cuenta cuenta = cuentaService.getById(cuentaId);
             cuenta.add(linkTo(methodOn(CuentaController.class).getById(cuenta.getId())).withSelfRel());
+            cuenta.add(linkTo(methodOn(CuentaController.class).depositarDinero(cuenta.getId(), null)).withRel("depositos"));
+            cuenta.add(linkTo(methodOn(CuentaController.class).retirarDinero(cuenta.getId(), null)).withRel("retiros"));
             cuenta.add(linkTo(methodOn(CuentaController.class).getAll()).withRel(IanaLinkRelations.COLLECTION));
 
             return new ResponseEntity<>(cuenta, HttpStatus.OK);
@@ -61,6 +65,8 @@ public class CuentaController {
         Cuenta nuevaCuenta = cuentaService.save(cuenta);
 
         nuevaCuenta.add(linkTo(methodOn(CuentaController.class).getById(nuevaCuenta.getId())).withSelfRel());
+        cuenta.add(linkTo(methodOn(CuentaController.class).depositarDinero(cuenta.getId(), null)).withRel("depositos"));
+        cuenta.add(linkTo(methodOn(CuentaController.class).retirarDinero(cuenta.getId(), null)).withRel("retiros"));
         nuevaCuenta.add(linkTo(methodOn(CuentaController.class).getAll()).withRel(IanaLinkRelations.COLLECTION));
 
         return ResponseEntity.created(linkTo(methodOn(CuentaController.class).getById(nuevaCuenta.getId())).toUri()).body(nuevaCuenta);
@@ -70,6 +76,30 @@ public class CuentaController {
     public ResponseEntity<Cuenta> update(@RequestBody Cuenta cuenta){
         Cuenta nuevaCuenta = cuentaService.save(cuenta);
         return new ResponseEntity<>(cuenta, HttpStatus.OK);
+    }
+
+    @PatchMapping("/deposito/{id}")
+    public ResponseEntity<Cuenta> depositarDinero(@PathVariable Integer id, @RequestBody Monto monto) {
+        Cuenta cuentaBBDD = cuentaService.depositar(id, monto.getMonto());
+
+        cuentaBBDD.add(linkTo(methodOn(CuentaController.class).getById(cuentaBBDD.getId())).withSelfRel());
+        cuentaBBDD.add(linkTo(methodOn(CuentaController.class).depositarDinero(cuentaBBDD.getId(), null)).withRel("depositos"));
+        cuentaBBDD.add(linkTo(methodOn(CuentaController.class).retirarDinero(cuentaBBDD.getId(), null)).withRel("retiros"));
+        cuentaBBDD.add(linkTo(methodOn(CuentaController.class).getAll()).withRel(IanaLinkRelations.COLLECTION));
+
+        return new ResponseEntity<>(cuentaBBDD,HttpStatus.OK);
+    }
+
+    @PatchMapping("/retiro/{id}")
+    public ResponseEntity<Cuenta> retirarDinero(@PathVariable Integer id, @RequestBody Monto monto) {
+        Cuenta cuentaBBDD = cuentaService.retirar(id, monto.getMonto());
+
+        cuentaBBDD.add(linkTo(methodOn(CuentaController.class).getById(cuentaBBDD.getId())).withSelfRel());
+        cuentaBBDD.add(linkTo(methodOn(CuentaController.class).depositarDinero(cuentaBBDD.getId(), null)).withRel("depositos"));
+        cuentaBBDD.add(linkTo(methodOn(CuentaController.class).retirarDinero(cuentaBBDD.getId(), null)).withRel("retiros"));
+        cuentaBBDD.add(linkTo(methodOn(CuentaController.class).getAll()).withRel(IanaLinkRelations.COLLECTION));
+
+        return new ResponseEntity<>(cuentaBBDD,HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

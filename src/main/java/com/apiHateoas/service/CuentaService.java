@@ -1,5 +1,6 @@
 package com.apiHateoas.service;
 
+import com.apiHateoas.exception.CuentaNotFoundException;
 import com.apiHateoas.model.Cuenta;
 import com.apiHateoas.repository.CuentaRepository;
 import jakarta.transaction.Transactional;
@@ -29,8 +30,21 @@ public class CuentaService {
         return cuentaRepository.save(cuenta);
     }
 
-    public void delete(Integer id) {
+    public void delete(Integer id) throws CuentaNotFoundException {
+        if (!cuentaRepository.existsById(id)){
+            throw new CuentaNotFoundException("Cuenta no encontrada");
+        }
         cuentaRepository.deleteById(id);
+    }
+
+    public Cuenta depositar(Integer id, float monto){
+        cuentaRepository.actualizarMonto(id ,monto);
+        return cuentaRepository.findById(id).get();
+    }
+
+    public Cuenta retirar(Integer id, float monto){
+        cuentaRepository.actualizarMonto(id ,- monto);
+        return cuentaRepository.findById(id).get();
     }
 }
 
